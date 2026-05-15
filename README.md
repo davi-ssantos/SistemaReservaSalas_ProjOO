@@ -11,6 +11,7 @@ Sistema de gerenciamento de reserva de salas (estudo individual, trabalho em gru
 - ✅ **Criar Reservas**: Reservar salas com validação de conflitos;
 - ✅ **Modificar Reservas**: Alterar data/hora de reservas existentes;
 - ✅ **Cancelar Reservas**: Cancelar reservas com notificação de usuários;
+- 🆕 **Reservas Recorrentes**: Gerar automaticamente reservas diárias, semanais ou mensais;
 - ✅ **Políticas de Reserva**: Suporta "Primeiro a Reservar" e "Prioridade Docente" (intercambíveis em tempo de execução);
 - ✅ **Relatórios**: Gerar relatórios diários e histórico de salas;
 - ✅ **Serviços Adicionais**: Decorar reservas com limpeza, multimídia e quadro negro;
@@ -59,6 +60,14 @@ Interface única de alto nível para o sistema, orquestrando internamente todos 
 ### 8. **Proxy** - `SalaProxy`
 Implementa lazy loading de salas do arquivo, mantendo cache em memória.
 
+### 9. [NOVO] **Template Method** - `ReservaRecorrente`
+Define o fluxo de geração de reservas recorrentes na classe abstrata,
+delegando apenas o cálculo do intervalo às subclasses:
+
+- `ReservaRecorrenteDiaria`: Recorrência diária
+- `ReservaRecorrenteSemanal`: Recorrência semanal
+- `ReservaRecorrenteMensal`: Recorrência mensal
+
 ---
 ## Como Usar
 
@@ -84,8 +93,9 @@ java -cp bin main.br.unifesp.reservasalas.cli.Main
 7.  Listar reservas por usuário
 8.  Gerar relatório diário
 9.  Gerar histórico de sala
-10. Trocar política de reserva
-11.  Sair
+10. Criar reserva recorrente <--- NOVIDADE
+11. Trocar política de reserva
+12. Sair
 ```
 
 ---
@@ -98,6 +108,13 @@ java -cp bin main.br.unifesp.reservasalas.cli.Main
 3. Se válido, cria `Reserva` com observadores registrados
 4. Observadores notificados via evento `CRIACAO`
 5. Reserva armazenada no repositório
+
+### Criar Reserva Recorrente - NOVIDADE
+1. Usuário fornece dados (usuário, sala, horário, intervalo de datas e tipo)
+2. Sistema instancia a subclasse correta de `ReservaRecorrente`
+3. Template Method itera pelas datas gerando uma reserva por ocorrência
+4. Conflitos em ocorrências individuais são ignorados sem interromper o fluxo
+5. Retorna lista de reservas criadas com sucesso
 
 ### Consultar Salas Disponíveis
 1. Usuário especifica intervalo de tempo
@@ -149,6 +166,7 @@ Veja a pasta `docs/` para:
 
 ## Autor
 
-**Davi Santos**  
+**Davi Santos**   - Arquitetura, documentação e implementação base
+**João Vitor Mancio** - Implementação de reservas recorrentes
 Projeto Prático - Disciplina de Padrões de Projeto Orientados a Objetos  
 UNIFESP
