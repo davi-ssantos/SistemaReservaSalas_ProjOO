@@ -7,11 +7,16 @@ import main.br.unifesp.reservasalas.domain.Sala;
 import main.br.unifesp.reservasalas.domain.Usuario;
 import main.br.unifesp.reservasalas.enums.TipoSala;
 import main.br.unifesp.reservasalas.patterns.facade.SistemaDeReservas;
+import main.br.unifesp.reservasalas.patterns.templatemethod.ReservaRecorrente;
+import main.br.unifesp.reservasalas.patterns.templatemethod.ReservaRecorrenteDiaria;
+import main.br.unifesp.reservasalas.patterns.templatemethod.ReservaRecorrenteMensal;
+import main.br.unifesp.reservasalas.patterns.templatemethod.ReservaRecorrenteSemanal;
 import main.br.unifesp.reservasalas.patterns.strategy.PrimeiroAReservar;
 import main.br.unifesp.reservasalas.patterns.strategy.PrioridadeDocente;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
@@ -21,7 +26,9 @@ public class Main {
 
     private static SistemaDeReservas sistema    = new SistemaDeReservas(new PrimeiroAReservar());
     private static Scanner scanner              = new Scanner(System.in);
-    private static DateTimeFormatter formatter  = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    private static DateTimeFormatter formatter      = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    private static DateTimeFormatter formatterData  = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static DateTimeFormatter formatterHora  = DateTimeFormatter.ofPattern("HH:mm");
 
     public static void main(String[] args) {
 
@@ -43,6 +50,7 @@ public class Main {
                 case 8:     gerarRelatorioDiario(); break;
                 case 9:     gerarHistoricoSala(); break;
                 case 10:    trocarPolitica(); break;
+                case 11:    criarReservaRecorrente(); break;
                 case 0:     System.out.println("Encerrando sistema..."); break;
                 default:    System.out.println("Opção inválida.");
             }
@@ -61,6 +69,7 @@ public class Main {
         System.out.println("\t8.\tGerar relatório diário");
         System.out.println("\t9.\tGerar histórico de sala");
         System.out.println("\t10.\tTrocar política de reserva");
+        System.out.println("\t11.\tCriar reserva recorrente");
         System.out.println("\t0.\tSair");
         System.out.print("Opção: ");
     }
@@ -127,6 +136,64 @@ public class Main {
         if (reserva != null) {
             System.out.println("Reserva criada com sucesso! ID: " + reserva.getId());
         }
+    }
+
+    private static void criarReservaRecorrente() {
+        System.out.print("ID do usuário: ");
+        String usuarioId = scanner.nextLine();
+        System.out.print("ID da sala: ");
+        String salaId = scanner.nextLine();
+
+        Usuario usuario = sistema.buscarUsuario(usuarioId);
+        if (usuario == null) {
+            System.out.println("Usuário não encontrado.");
+            return;
+        }
+
+        Sala sala = sistema.listarSalasDisponiveis().stream()
+                .filter(s -> s.getId().equals(salaId))
+                .findFirst().orElse(null);
+
+        if (sala == null) {
+            System.out.println("Sala não encontrada.");
+            return;
+        }
+
+        System.out.print("Horário de início (HH:mm): ");
+        LocalTime horaInicio = lerHora();
+        System.out.print("Horário de fim (HH:mm): ");
+        LocalTime horaFim = lerHora();
+        System.out.print("Data de início (dd/MM/yyyy): ");
+        LocalDate dataInicio = lerData();
+        System.out.print("Data de fim (dd/MM/yyyy): ");
+        LocalDate dataFim = lerData();
+        if (horaInicio == null || horaFim == null || dataInicio == null || dataFim == null) return;
+
+        System.out.println("Tipo de recorrência:");
+        System.out.println("1. Diária");
+        System.out.println("2. Semanal");
+        System.out.println("3. Mensal");
+        System.out.print("Opção: ");
+        int opcao = lerInt();
+
+        ReservaRecorrente recorrencia;
+        switch (opcao) {
+            case 1:
+                recorrencia = new ReservaRecorrenteDiaria(usuario, sala, horaInicio, horaFim, dataInicio, dataFim);
+                break;
+            case 2:
+                recorrencia = new ReservaRecorrenteSemanal(usuario, sala, horaInicio, horaFim, dataInicio, dataFim);
+                break;
+            case 3:
+                recorrencia = new ReservaRecorrenteMensal(usuario, sala, horaInicio, horaFim, dataInicio, dataFim);
+                break;
+            default:
+                System.out.println("Opção inválida.");
+                return;
+        }
+
+        List<Reserva> reservas = sistema.criarReservaRecorrente(recorrencia);
+        System.out.println("Reservas criadas com sucesso: " + reservas.size());
     }
 
     private static void modificarReserva() {
@@ -229,6 +296,24 @@ public class Main {
             return LocalDateTime.parse(scanner.nextLine(), formatter);
         } catch (DateTimeParseException e) {
             System.out.println("Formato inválido. Use dd/MM/yyyy HH:mm");
+            return null;
+        }
+    }
+
+    private static LocalDate lerData() {
+        try {
+            return LocalDate.parse(scanner.nextLine(), formatterData);
+        } catch (DateTimeParseException e) {
+            System.out.println("Formato inválido. Use dd/MM/yyyy");
+            return null;
+        }
+    }
+
+    private static LocalTime lerHora() {
+        try {
+            return LocalTime.parse(scanner.nextLine(), formatterHora);
+        } catch (DateTimeParseException e) {
+            System.out.println("Formato inválido. Use HH:mm");
             return null;
         }
     }
