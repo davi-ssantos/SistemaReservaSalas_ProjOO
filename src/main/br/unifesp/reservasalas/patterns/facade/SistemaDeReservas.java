@@ -11,6 +11,7 @@ import main.br.unifesp.reservasalas.patterns.observer.ServicoRelatorio;
 import main.br.unifesp.reservasalas.patterns.observer.UsuarioObservador;
 import main.br.unifesp.reservasalas.patterns.singleton.RepositorioSalas;
 import main.br.unifesp.reservasalas.patterns.strategy.PoliticaDeReserva;
+import main.br.unifesp.reservasalas.patterns.templatemethod.ReservaRecorrente;
 import main.br.unifesp.reservasalas.patterns.visitor.VisitorHistoricoSala;
 import main.br.unifesp.reservasalas.patterns.visitor.VisitorRelatorioDiario;
 
@@ -24,6 +25,7 @@ public class SistemaDeReservas {
 
     private RepositorioSalas    repositorio;
     private PoliticaDeReserva   politica;
+    private boolean             silenciarConflitos = false;
 
     public SistemaDeReservas(PoliticaDeReserva politica) {
         this.repositorio    = RepositorioSalas.getInstance();
@@ -89,13 +91,25 @@ public class SistemaDeReservas {
         );
 
         if (!politica.validar(reserva, existentes)) {
-            System.out.println("Conflito detectado! Reserva não criada.");
+            if (!silenciarConflitos) {
+                System.out.println("Conflito detectado! Reserva não criada.");
+            }
             return null;
         }
 
         reserva.confirmar();
         repositorio.adicionarReserva(reserva);
         return reserva;
+    }
+
+    public List<Reserva> criarReservaRecorrente(ReservaRecorrente recorrencia) {
+        boolean silenciarAnterior = silenciarConflitos;
+        silenciarConflitos = true;
+        try {
+            return recorrencia.gerarReservas(this);
+        } finally {
+            silenciarConflitos = silenciarAnterior;
+        }
     }
 
     public void modificarReserva(String id, LocalDateTime novoInicio, LocalDateTime novoFim) {
