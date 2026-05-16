@@ -150,5 +150,6 @@ Veja a pasta `docs/` para:
 ## Autor
 
 **Davi Santos**  
+**João Vitor Mâncio Chaves**
 Projeto Prático - Disciplina de Padrões de Projeto Orientados a Objetos  
 UNIFESP
